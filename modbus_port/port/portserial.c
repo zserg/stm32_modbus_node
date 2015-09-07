@@ -206,14 +206,15 @@ BOOL
 xMBPortSerialPutByte( CHAR ucByte )
 {
     //USART1->US_THR = ucByte;
-    huart2->pTxBuffPtr = pData;
+    huart2->Instance->DR = pData;
     return TRUE;
 }
 
 BOOL
 xMBPortSerialGetByte( CHAR * pucByte )
 {
-    *pucByte = USART1->US_RHR;
+    //*pucByte = USART1->US_RHR;
+    *pucByte = (CHAR) huart2->Instance->DR;
     return TRUE;
 }
 
