@@ -155,7 +155,7 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
     BOOL            bStatus = FALSE;
 
     huart2.Instance = USART2;
-    huart2.Init.BaudRate = 9600;
+    huart2.Init.BaudRate = ulBaudRate;
     huart2.Init.StopBits = UART_STOPBITS_1;
     huart2.Init.Mode = UART_MODE_TX_RX;
     huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
@@ -221,45 +221,48 @@ xMBPortSerialGetByte( CHAR * pucByte )
 void
 vUSARTHandler( void )
 {
-    uint32_t        uiCSR;
-    uint32_t        uiIMR;
-    uiCSR = xUSARTHWMappings[ucUsedPort].pUsart->US_CSR;
-    uiIMR = xUSARTHWMappings[ucUsedPort].pUsart->US_IMR;
-    uint32_t        uiCSRMasked = uiCSR & uiIMR;
-    if( uiCSRMasked & US_CSR_RXRDY )
-    {
-        pxMBFrameCBByteReceived(  );
-    }
-    if( uiCSRMasked & US_CSR_TXRDY )
-    {
+  uint32_t tmp_flag, tmp_it_source;
+  //  if( uiCSRMasked & US_CSR_RXRDY )
+  //  {
+  //      pxMBFrameCBByteReceived(  );
+  //  }
+  tmp_flag = __HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(huart, UART_IT_RXNE);
+  if((tmp_flag != RESET) && (tmp_it_source != RESET))
+  { 
         pxMBFrameCBTransmitterEmpty(  );
-    }
-    if( uiCSRMasked & US_CSR_TXEMPTY )
-    {
-        if( NULL != xUSARTHWMappings[ucUsedPort].USARTDEPin )
-        {
-            PIO_Clear( xUSARTHWMappings[ucUsedPort].USARTDEPin );
-        }
-        if( NULL != xUSARTHWMappings[ucUsedPort].USARTNotREPin )
-        {
-            PIO_Clear( xUSARTHWMappings[ucUsedPort].USARTNotREPin );
-        }
-        USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
-    }
-}
+  }
 
-#if USART1_ENABLED == 1
-void
-USART1_IrqHandler( void )
-{
-    vUSARTHandler(  );
-}
-#endif
+  //if( uiCSRMasked & US_CSR_TXRDY )
+  //  {
+  //      pxMBFrameCBTransmitterEmpty(  );
+  //  }
+  
+  tmp_flag = __HAL_UART_GET_FLAG(huart, UART_FLAG_TXE);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(huart, UART_IT_TXE);
+  if((tmp_flag != RESET) && (tmp_it_source != RESET))
+  { 
+        pxMBFrameCBTransmitterEmpty(  );
+  }
 
-#if USART0_ENABLED == 1
-void
-USART0_IrqHandler( void )
-{
-    vUSARTHandler(  );
+  //  if( uiCSRMasked & US_CSR_TXEMPTY )
+  //  {
+  //      if( NULL != xUSARTHWMappings[ucUsedPort].USARTDEPin )
+  //      {
+  //          PIO_Clear( xUSARTHWMappings[ucUsedPort].USARTDEPin );
+  //      }
+  //      if( NULL != xUSARTHWMappings[ucUsedPort].USARTNotREPin )
+  //      {
+  //          PIO_Clear( xUSARTHWMappings[ucUsedPort].USARTNotREPin );
+  //      }
+  //      USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
+  //  }
+  tmp_flag = __HAL_UART_GET_FLAG(huart, UART_FLAG_TC);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(huart, UART_IT_TC);
+  if((tmp_flag != RESET) && (tmp_it_source != RESET))
+  { 
+      HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_RESET);
+      __HAL_UART_DISABLE_IT(huart2, UART_IT_TC);
+  }
+
 }
-#endif
