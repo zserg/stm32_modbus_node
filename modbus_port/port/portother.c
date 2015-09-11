@@ -32,25 +32,20 @@
 /* ----------------------- Modbus includes ----------------------------------*/
 #include "mb.h"
 #include "mbport.h"
+#include "stm32f1xx_hal.h"
 
 /* ----------------------- Modbus includes ----------------------------------*/
-#include <intrinsics.h>
+//#include <core_cmFunc.h>
+
 
 /* ----------------------- Variables ----------------------------------------*/
 static ULONG    ulNesting;
-static __istate_t xOldState;
 
 /* ----------------------- Start implementation -----------------------------*/
 void
 vMBPortEnterCritical( void )
 {
-    __istate_t      xCurState;
-    xCurState = __get_interrupt_state(  );
-    __disable_interrupt(  );
-    if( ulNesting == 0 )
-    {
-        xOldState = xCurState;
-    }
+    __disable_irq(  );
     ulNesting++;
 }
 
@@ -60,7 +55,7 @@ vMBPortExitCritical( void )
     ulNesting--;
     if( 0 == ulNesting )
     {
-        __set_interrupt_state( xOldState );
+        __enable_irq();
     }
 }
 

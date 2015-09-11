@@ -53,6 +53,21 @@ SRC += ./Src/stm32f1xx_hal_msp.c
 SRC += ./stm32fonewire/tm_stm32f4_onewire.c
 SRC += ./stm32fonewire/tm_stm32f4_ds18b20.c
 SRC += ./stm32f_hcsr04/tm_stm32f4_hcsr04.c
+SRC += ./modbus_port/port/portevent.c
+SRC += ./modbus_port/port/portother.c
+SRC += ./modbus_port/port/portserial.c
+SRC += ./modbus_port/port/porttimer.c
+SRC += ./modbus/mb.c
+SRC += ./modbus/rtu/mbcrc.c
+SRC += ./modbus/rtu/mbrtu.c
+SRC += ./modbus/ascii/mbascii.c
+SRC += ./modbus/functions/mbfunccoils.c
+SRC += ./modbus/functions/mbfuncdiag.c
+SRC += ./modbus/functions/mbfuncdisc.c
+SRC += ./modbus/functions/mbfuncholding.c
+SRC += ./modbus/functions/mbfuncinput.c
+SRC += ./modbus/functions/mbfuncother.c
+SRC += ./modbus/functions/mbutils.c
 #SRC += ./Src/freertos.c
 #SRC += ./Src/usb_device.c
 #SRC += ./Src/usbd_conf.c
@@ -113,6 +128,10 @@ INCDIRS = $(DEVDIR)/Include \
           $(STMSPINCDDIR) \
 	  ./stm32f_hcsr04 \
 	  ./stm32fonewire \
+	  ./modbus_port/port \
+	  ./modbus/include \
+	  ./modbus/rtu \
+	  ./modbus/ascii \
           ./Inc
 # List the user directory to look for the libraries here
 LIBDIRS += $(LIBSDIRS)

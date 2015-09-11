@@ -36,6 +36,8 @@
 #include "stm32f1xx.h"
 #include "stm32f1xx_it.h"
 /* USER CODE BEGIN 0 */
+void TCX_IRQHANDLER( void );
+void vUSARTHandler( void );
 
 /* USER CODE END 0 */
 /* External variables --------------------------------------------------------*/
@@ -68,9 +70,9 @@ void SysTick_Handler(void)
 void TIM1_UP_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_UP_IRQn 0 */
-
+  TCX_IRQHANDLER();
   /* USER CODE END TIM1_UP_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim1);
+//  HAL_TIM_IRQHandler(&htim1);
   /* USER CODE BEGIN TIM1_UP_IRQn 1 */
 
   /* USER CODE END TIM1_UP_IRQn 1 */

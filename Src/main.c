@@ -36,10 +36,13 @@
 #include "stm32f1xx_hal.h"
 
 /* USER CODE BEGIN Includes */
+#include "main.h"
 #include "stdio.h"
 #include "tm_stm32f4_onewire.h"
 #include "tm_stm32f4_ds18b20.h"
 #include "tm_stm32f4_hcsr04.h"
+#include "mb.h"
+#include "mbport.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -50,8 +53,23 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+#define REG_INPUT_START                 ( 1000 )
+#define REG_INPUT_NREGS                 ( 64 )
+
+#define REG_HOLDING_START               ( 1 )
+#define REG_HOLDING_NREGS               ( 32 )
+
+
 TM_OneWire_t OneWire;
 TM_HCSR04_t HCSR04;
+
+
+static USHORT   usRegInputStart = REG_INPUT_START;
+static USHORT   usRegInputBuf[REG_INPUT_NREGS];
+static USHORT   usRegHoldingStart = REG_HOLDING_START;
+static USHORT   usRegHoldingBuf[REG_HOLDING_NREGS];
+const UCHAR     ucSlaveID[] = { 0xAA, 0xBB, 0xCC };
+eMBErrorCode    eStatus;
 
 /* USER CODE END PV */
 
@@ -61,7 +79,6 @@ static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -84,13 +101,8 @@ static void MX_USART2_UART_Init(void);
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
-uint8_t devices, i, j, count, device[2][8];
-uint16_t temp;
+  uint8_t devices, i, j, count, device[2][8];
 
-  /* USER CODE END 1 */
-
-  /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
@@ -103,79 +115,79 @@ uint16_t temp;
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_USART1_UART_Init();
-  MX_USART2_UART_Init();
 
-  /* USER CODE BEGIN 2 */
-
-  if (HAL_TIM_Base_Start(&htim2) != HAL_OK)
-       {
-         /* Starting Error */
-         while(1){
-         printf("**  Error \n\r");
-         }
-       }
+  /* Start TIM2 Timer */
+  HAL_TIM_Base_Start(&htim2);
+  
   /* One Wire Initialization and devices search */ 
 
   TM_OneWire_Init(&OneWire, GPIOB, GPIO_PIN_11);
   TM_OneWire_ReadBit(&OneWire);
   devices = TM_OneWire_First(&OneWire);
+  
+  // One Wire Devices search
   count = 0;
   while (devices) {
-  /* Increase count variable */
-  count++;
-
-  /* Get full 8-bytes rom address */
-  TM_OneWire_GetFullROM(&OneWire, device[count - 1]);
-
-  /* Check for new device */
-  devices = TM_OneWire_Next(&OneWire);
+    count++;
+    TM_OneWire_GetFullROM(&OneWire, device[count - 1]);
+    devices = TM_OneWire_Next(&OneWire);
   }
 
-  /* If any devices on 1-wire */
   if (count > 0) {
      printf("Devices found on 1-wire instance: %d\n\r", count);
 
-     /* Display 64bit rom code */
      for (j = 0; j < count; j++) {
         for (i = 0; i < 8; i++) {
            printf("0x%02X ", device[j][i]);
         }
      }
   } else {
-  /* Nothing on OneWire */
     printf("No devices on OneWire.\n\r");
   }
-  //   i = TM_OneWire_Reset(&OneWire);
-     
-     if (TM_DS18B20_Is(device[0])) {
-         printf("Device is DS18B20\n\r");
-     } else if (TM_DS18S20_Is(device[0])) {
-         printf("Device is DS18S20\n\r");
-     } else {    
-         printf("Device is not DS18B20 or DS18S20\n\r");
-     }
-
-
-
-  /* USER CODE END 2 */
-
-  /* USER CODE BEGIN 3 */
-  /* Infinite loop */
-  while (1)
-  {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
-	HAL_Delay(2000);
-     
-        /* Temperature Measurements */
  
-        temp = onewire_read_temperature(&OneWire,device[0]);
-        printf("Raw Temp: 0x%0x (%0d C);\n\r", temp, temp>>4);
-  }
-  /* USER CODE END 3 */
 
+ // Modbus Init
+  if( MB_ENOERR != ( eStatus = eMBInit( MB_RTU, 0x0A, 1, 38400, MB_PAR_EVEN ) ) )
+  {
+      printf("MODBUS: Can not initialize\n\r");
+      while(1);
+  }
+  else
+  {      
+      if( MB_ENOERR != ( eStatus = eMBSetSlaveID( 0x34, TRUE, ucSlaveID, 3 ) ) )
+      {
+          printf("MODBUS: Can not set slave id. Check arguments\n\r");
+          while(1);
+      }
+      else if( MB_ENOERR != ( eStatus = eMBEnable(  ) ) )
+      {
+          printf("MODBUS: Enable failed\n\r");
+          while(1);
+      }
+  }
+
+//=====  Main Cycle =======================
+   while(1)      
+   {
+
+      // Modbus FSM Poll
+      ( void )eMBPoll(  );
+      usRegInputBuf[0]++;
+    
+      // OneWire Access
+      usRegHoldingBuf[0] = onewire_read_temperature(&OneWire,device[0]);
+
+   }
+//=====  End of Main Cycle =======================
+    
+    //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+	//HAL_Delay(100);
+	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+	//HAL_Delay(2000);
+     
+ 
 }
+
 
 /** System Clock Configuration
 */
@@ -211,7 +223,7 @@ void MX_TIM1_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig;
 
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 71;
+  htim1.Init.Prescaler = MB_TIMER_PRESCALER;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 65535;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -343,6 +355,84 @@ uint16_t onewire_read_temperature(TM_OneWire_t* OneWire, uint8_t* device)
    }
 }
 
+eMBErrorCode
+eMBRegInputCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs )
+{
+    eMBErrorCode    eStatus = MB_ENOERR;
+    int             iRegIndex;
+
+    if( ( usAddress >= REG_INPUT_START )
+        && ( usAddress + usNRegs <= REG_INPUT_START + REG_INPUT_NREGS ) )
+    {
+        iRegIndex = ( int )( usAddress - usRegInputStart );
+        while( usNRegs > 0 )
+        {
+            *pucRegBuffer++ =
+                ( unsigned char )( usRegInputBuf[iRegIndex] >> 8 );
+            *pucRegBuffer++ =
+                ( unsigned char )( usRegInputBuf[iRegIndex] & 0xFF );
+            iRegIndex++;
+            usNRegs--;
+        }
+    }
+    else
+    {
+        eStatus = MB_ENOREG;
+    }
+
+    return eStatus;
+}
+
+eMBErrorCode
+eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode )
+{
+    eMBErrorCode    eStatus = MB_ENOERR;
+    int             iRegIndex;
+
+    if( ( usAddress >= REG_HOLDING_START ) && ( usAddress + usNRegs <= REG_HOLDING_START + REG_HOLDING_NREGS ) )
+    {
+        iRegIndex = ( int )( usAddress - usRegHoldingStart );
+        switch ( eMode )
+        {
+        case MB_REG_READ:
+            while( usNRegs > 0 )
+            {
+                *pucRegBuffer++ = ( unsigned char )( usRegHoldingBuf[iRegIndex] >> 8 );
+                *pucRegBuffer++ = ( unsigned char )( usRegHoldingBuf[iRegIndex] & 0xFF );
+                iRegIndex++;
+                usNRegs--;
+            }
+            break;
+
+        case MB_REG_WRITE:
+            while( usNRegs > 0 )
+            {
+                usRegHoldingBuf[iRegIndex] = *pucRegBuffer++ << 8;
+                usRegHoldingBuf[iRegIndex] |= *pucRegBuffer++;
+                iRegIndex++;
+                usNRegs--;
+            }
+        }
+    }
+    else
+    {
+        eStatus = MB_ENOREG;
+    }
+    return eStatus;
+}
+
+eMBErrorCode
+eMBRegCoilsCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils,
+               eMBRegisterMode eMode )
+{
+    return MB_ENOREG;
+}
+
+eMBErrorCode
+eMBRegDiscreteCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete )
+{
+    return MB_ENOREG;
+}
 /* USER CODE END 4 */
 
 #ifdef USE_FULL_ASSERT

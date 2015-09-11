@@ -31,95 +31,41 @@
 /* ----------------------- Platform includes --------------------------------*/
 #include <stdlib.h>
 #include "port.h"
+#include "stm32f1xx_hal.h"
 
 /* ----------------------- Modbus includes ----------------------------------*/
 #include "mb.h"
 #include "mbport.h"
 
 /* ----------------------- Defines ------------------------------------------*/
-#define USART0_ENABLED          ( 1 )
-#define USART0_IDX              ( 0 )
-
-#define USART1_ENABLED          ( 1 )
-#define USART1_IDX              ( USART0_IDX + USART0_ENABLED * 1 )
-
-#define USART_IDX_LAST          ( USART1_IDX )
-
-#define USART_INVALID_PORT      ( 0xFF )
-#define USART_NOT_RE_IDX        ( 3 )
-#define USART_DE_IDX            ( 4 )
 
 /* ----------------------- Static variables ---------------------------------*/
-
-#if USART1_ENABLED == 1
-const Pin       xUSART0Pins[] = {
-    PIN_USART0_TXD,
-    PIN_USART0_RXD
-};
-#endif
-
-#if USART1_ENABLED == 1
-const Pin       xUSART1NotREPin = { 1 << 25, PIOA, ID_PIOA, PIO_OUTPUT_0, PIO_DEFAULT };
-const Pin       xUSART1DEPin = { 1 << 24, PIOA, ID_PIOA, PIO_OUTPUT_0, PIO_DEFAULT };
-
-const Pin       xUSART1Pins[] = {
-    PIN_USART1_TXD,
-    PIN_USART1_RXD,
-    {1 << 23, PIOA, ID_PIOA, PIO_OUTPUT_1, PIO_DEFAULT}
-};
-#endif
-
-const struct xUSARTHWMappings_t
-{
-    Usart          *pUsart;
-    unsigned int    xUSARTID;
-    IRQn_Type       xUSARTIrq;
-    const Pin      *USARTNotREPin;
-    const Pin      *USARTDEPin;
-    const Pin      *xUSARTPins;
-    uint32_t        xUSARTPinsCnt;
-
-
-} xUSARTHWMappings[] =
-{
-#if USART0_ENABLED == 1
-    {
-    USART0, ID_USART0, USART0_IRQn, NULL, NULL, &xUSART0Pins[0], PIO_LISTSIZE( xUSART0Pins )},
-#endif
-#if USART1_ENABLED == 1
-    {
-    USART1, ID_USART1, USART1_IRQn, &xUSART1NotREPin, &xUSART1DEPin, &xUSART1Pins[0], PIO_LISTSIZE( xUSART1Pins )},
-#endif
-};
-
-static UCHAR    ucUsedPort = USART_INVALID_PORT;
-
 
 
 //===========================
 #define USARTDEPin_GPIOx    GPIOA
 #define USARTDEPin_GPIO_PIN GPIO_PIN_4
 
-extern UART_HandleTypeDe huart2;
+extern UART_HandleTypeDef huart2;
 
 void
-vMBPortSerialEnable(UART_HandleTypeDef *huart, BOOL xRxEnable, BOOL xTxEnable )
+vMBPortSerialEnable(BOOL xRxEnable, BOOL xTxEnable )
 {
 
     if( xRxEnable )
     {
         //USART_SetReceiverEnabled( xUSARTHWMappings[ucUsedPort].pUsart, 1 );
         //USART_EnableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IDR_RXRDY );
-        SET_BIT(huart->Instance->CR1, USART_CR1_RE);
-        __HAL_UART_ENABLE_IT(huart, UART_IT_RXNE);
+        SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
+        __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
 
     }
     else
     {
         //USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IDR_RXRDY );
         //USART_SetReceiverEnabled( xUSARTHWMappings[ucUsedPort].pUsart, 0 );
-        __HAL_UART_DISABLE_IT(huart, UART_IT_RXNE);
-        CLEAR_BIT(huart->Instance->CR1, USART_CR1_RE);
+        __HAL_UART_DISABLE_IT(&huart2, UART_IT_RXNE);
+        CLEAR_BIT(huart2.Instance->CR1, USART_CR1_RE);
     }
 
     if( xTxEnable )
@@ -136,16 +82,16 @@ vMBPortSerialEnable(UART_HandleTypeDef *huart, BOOL xRxEnable, BOOL xTxEnable )
         //USART_SetTransmitterEnabled( xUSARTHWMappings[ucUsedPort].pUsart, 1 );
         //USART_EnableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXRDY );
         //USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
-        SET_BIT(huart->Instance->CR1, USART_CR1_TE);
-        __HAL_UART_ENABLE_IT(huart, UART_IT_TXE);
-        __HAL_UART_DISABLE_IT(huart, UART_IT_TC);
+        SET_BIT(huart2.Instance->CR1, USART_CR1_TE);
+        __HAL_UART_ENABLE_IT(&huart2, UART_IT_TXE);
+        __HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
     }
     else
     {
         //USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IDR_TXRDY );
         //USART_EnableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
-        __HAL_UART_DISABLE_IT(huart, UART_IT_TXE);
-        __HAL_UART_ENABLE_IT(huart, UART_IT_TC);
+        __HAL_UART_DISABLE_IT(&huart2, UART_IT_TXE);
+        __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);
     }
 }
 
@@ -165,13 +111,13 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
         switch ( eParity )
         {
         case MB_PAR_NONE:
-            huart.Init.Parity = UART_PARITY_NONE;
+            huart2.Init.Parity = UART_PARITY_NONE;
             break;
         case MB_PAR_ODD:
-            huart.Init.Parity = UART_PARITY_ODD;
+            huart2.Init.Parity = UART_PARITY_ODD;
             break;
         case MB_PAR_EVEN:
-            huart.Init.Parity = UART_PARITY_EVEN;
+            huart2.Init.Parity = UART_PARITY_EVEN;
             break;
         default:
             bStatus = FALSE;
@@ -181,7 +127,7 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
         switch ( ucDataBits )
         {
         case 8:
-            huart.Init.WordLength = UART_WORDLENGTH_8B;
+            huart2.Init.WordLength = UART_WORDLENGTH_8B;
             break;
         default:
             bStatus = FALSE;
@@ -191,7 +137,6 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
         {
             HAL_UART_Init(&huart2);
         }
-    }
 
     return bStatus;
 }
@@ -199,14 +144,14 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
 void
 vMBPortSerialClose( void )
 {
-    HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_CLEAR);
+    HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_RESET);
 }
 
 BOOL
 xMBPortSerialPutByte( CHAR ucByte )
 {
     //USART1->US_THR = ucByte;
-    huart2->Instance->DR = pData;
+    huart2.Instance->DR = ucByte;
     return TRUE;
 }
 
@@ -214,7 +159,7 @@ BOOL
 xMBPortSerialGetByte( CHAR * pucByte )
 {
     //*pucByte = USART1->US_RHR;
-    *pucByte = (CHAR) huart2->Instance->DR;
+    *pucByte = (CHAR) huart2.Instance->DR;
     return TRUE;
 }
 
@@ -226,8 +171,8 @@ vUSARTHandler( void )
   //  {
   //      pxMBFrameCBByteReceived(  );
   //  }
-  tmp_flag = __HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE);
-  tmp_it_source = __HAL_UART_GET_IT_SOURCE(huart, UART_IT_RXNE);
+  tmp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_RXNE);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_RXNE);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
         pxMBFrameCBTransmitterEmpty(  );
@@ -238,8 +183,8 @@ vUSARTHandler( void )
   //      pxMBFrameCBTransmitterEmpty(  );
   //  }
   
-  tmp_flag = __HAL_UART_GET_FLAG(huart, UART_FLAG_TXE);
-  tmp_it_source = __HAL_UART_GET_IT_SOURCE(huart, UART_IT_TXE);
+  tmp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_TXE);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_TXE);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
         pxMBFrameCBTransmitterEmpty(  );
@@ -257,12 +202,12 @@ vUSARTHandler( void )
   //      }
   //      USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
   //  }
-  tmp_flag = __HAL_UART_GET_FLAG(huart, UART_FLAG_TC);
-  tmp_it_source = __HAL_UART_GET_IT_SOURCE(huart, UART_IT_TC);
+  tmp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_TC);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_TC);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
       HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_RESET);
-      __HAL_UART_DISABLE_IT(huart2, UART_IT_TC);
+      __HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
   }
 
 }

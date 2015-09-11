@@ -32,13 +32,13 @@
 #define _PORT_H
 
 /* ----------------------- Platform includes --------------------------------*/
-#include <board.h>
-#include <tc/tc.h>
-#include <pmc/pmc.h>
-#include <wdt/wdt.h>
-#include <pio/pio.h>
-#include <cmsis/core_cm3.h>
-#include <usart/usart.h>
+//#include <board.h>
+//#include <tc/tc.h>
+//#include <pmc/pmc.h>
+//#include <wdt/wdt.h>
+//#include <pio/pio.h>
+//#include <cmsis/core_cm3.h>
+//#include <usart/usart.h>
 
 /* ----------------------- Defines ------------------------------------------*/
 #define	INLINE                      inline
