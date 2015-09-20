@@ -27,12 +27,12 @@
 		<link>
 			<name>HAL</name>
 			<type>2</type>
-			<location>/home/zserg/not_work/stm32_projects/STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src</location>
+			<locationURI>$%7BWORKSPACE_LOC%7D/stm32tools/STM32Cube_FW_F1_V1.0.0/Drivers/STM32F1xx_HAL_Driver/Src</locationURI>
 		</link>
 		<link>
 			<name>STM32F10x</name>
 			<type>2</type>
-			<location>/home/zserg/not_work/stm32_projects/STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates</location>
+			<locationURI>$%7BWORKSPACE_LOC%7D/stm32tools/STM32Cube_FW_F1_V1.0.0/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
