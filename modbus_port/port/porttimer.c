@@ -38,25 +38,6 @@
 
 /* ----------------------- Defines ------------------------------------------*/
 
-#define BOARD_MCK               72000000
-
-#define MB_TIMER_DEBUG                      ( 0 )
-#define MB_TIMER_PRESCALER                  ( BOARD_MCK-1 )
-#define MB_TIMER_TICKS                      ( BOARD_MCK / (MB_TIMER_PRESCALER + 1) )
-#define MB_50US_TICKS                       ( 20000UL )
-
-#define TCX                                 ( TC0 )
-#define TCXIRQ                              ( TC0_IRQn )
-#define TCCHANNEL                           ( 0 )
-
-#define TC_CMRX_WAVE                        ( 0x1 << 15 )
-#define TC_CMRX_TCCLKS_TIMER_DIV4_CLOCK     ( 0x3 << 0 )
-#define TC_CMRX_CPCSTOP                     ( 0x1 << 6 )
-#define TC_CMRX_WAVESEL_UP_RC               ( 0x2 << 13 )
-
-#define TC_IERX_CPCS                        ( 0x1 << 4 )
-#define TC_IERX_CPAS                        ( 0x1 << 2 )
-#define TC_SRX_CPAS                         ( 0x1 << 2 )
 #if MB_TIMER_DEBUG == 1
 #define TIMER_PIN { 1 << 6, PIOA, ID_PIOA, PIO_OUTPUT_1, PIO_DEFAULT }
 #endif
@@ -85,7 +66,8 @@ xMBPortTimersInit( USHORT usTim1Timerout50us )
     //TC_Configure( TCX, 0, TC_CMRX_WAVE | TC_CMRX_TCCLKS_TIMER_DIV4_CLOCK | TC_CMRX_WAVESEL_UP_RC | TC_CMRX_CPCSTOP );
     //TCX->TC_CHANNEL[TCCHANNEL].TC_RA = ( MB_TIMER_TICKS * usTim1Timerout50us ) / ( MB_50US_TICKS );
     //TCX->TC_CHANNEL[TCCHANNEL].TC_RC = ( MB_TIMER_TICKS * usTim1Timerout50us ) / ( MB_50US_TICKS );
-    htim1.Init.Period = ( MB_TIMER_TICKS * usTim1Timerout50us ) / ( MB_50US_TICKS );
+    //htim1.Init.Period = ( MB_TIMER_TICKS * usTim1Timerout50us ) / ( MB_50US_TICKS );
+    htim1.Init.Period = ( 50 * usTim1Timerout50us );
     HAL_TIM_Base_Init(&htim1);
 
     //NVIC_ClearPendingIRQ( TCXIRQ );

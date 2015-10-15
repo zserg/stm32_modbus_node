@@ -91,7 +91,7 @@ vMBPortSerialEnable(BOOL xRxEnable, BOOL xTxEnable )
         //USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IDR_TXRDY );
         //USART_EnableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
         __HAL_UART_DISABLE_IT(&huart2, UART_IT_TXE);
-        __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);
+        __HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
     }
 }
 
@@ -175,7 +175,7 @@ vUSARTHandler( void )
   tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_RXNE);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
-        pxMBFrameCBTransmitterEmpty(  );
+	  pxMBFrameCBByteReceived(  );
   }
 
   //if( uiCSRMasked & US_CSR_TXRDY )

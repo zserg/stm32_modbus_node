@@ -227,6 +227,10 @@ xMBRTUReceiveFSM( void )
 {
     BOOL            xTaskNeedSwitch = FALSE;
     UCHAR           ucByte;
+    eMBRcvState eRcvState_int;
+ 
+     eRcvState_int = eRcvState;
+
 
     assert( eSndState == STATE_TX_IDLE );
 

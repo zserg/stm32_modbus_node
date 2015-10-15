@@ -175,7 +175,7 @@ int main(void)
       usRegInputBuf[0]++;
     
       // OneWire Access
-      usRegHoldingBuf[0] = onewire_read_temperature(&OneWire,device[0]);
+//      usRegHoldingBuf[0] = onewire_read_temperature(&OneWire,device[0]);
 
    }
 //=====  End of Main Cycle =======================
@@ -205,7 +205,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
