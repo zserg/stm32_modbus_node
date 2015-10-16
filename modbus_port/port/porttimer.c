@@ -35,6 +35,7 @@
 #include "mb.h"
 #include "mbport.h"
 #include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_tim.h"
 
 /* ----------------------- Defines ------------------------------------------*/
 
@@ -72,6 +73,7 @@ xMBPortTimersInit( USHORT usTim1Timerout50us )
 
     //NVIC_ClearPendingIRQ( TCXIRQ );
     HAL_NVIC_ClearPendingIRQ(TIM1_UP_IRQn);
+    __HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
     //NVIC_SetPriority( TCXIRQ, 0xF << 4 );
     HAL_NVIC_SetPriority(TIM1_UP_IRQn, 0x0F, 0);
     //NVIC_EnableIRQ( TCXIRQ );
@@ -122,6 +124,7 @@ void
 TCX_IRQHANDLER( void )
 {
     __HAL_TIM_DISABLE(&htim1);
+    __HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
   
 #if MB_TIMER_DEBUG == 1
         PIO_Clear( &xTimerDebugPins[0] );

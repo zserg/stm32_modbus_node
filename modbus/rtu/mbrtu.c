@@ -136,6 +136,7 @@ eMBRTUStart( void )
     vMBPortTimersEnable(  );
 
     EXIT_CRITICAL_SECTION(  );
+    printf("0\n");
 }
 
 void
@@ -243,6 +244,7 @@ xMBRTUReceiveFSM( void )
          * wait until the frame is finished.
          */
     case STATE_RX_INIT:
+        printf("1\n");
         vMBPortTimersEnable(  );
         break;
 
@@ -250,6 +252,7 @@ xMBRTUReceiveFSM( void )
          * damaged frame are transmitted.
          */
     case STATE_RX_ERROR:
+        printf("2\n");
         vMBPortTimersEnable(  );
         break;
 
@@ -258,6 +261,7 @@ xMBRTUReceiveFSM( void )
          * receiver is in the state STATE_RX_RECEIVCE.
          */
     case STATE_RX_IDLE:
+        printf("3\n");
         usRcvBufferPos = 0;
         ucRTUBuf[usRcvBufferPos++] = ucByte;
         eRcvState = STATE_RX_RCV;
@@ -272,6 +276,7 @@ xMBRTUReceiveFSM( void )
          * ignored.
          */
     case STATE_RX_RCV:
+        printf("4\n");
         if( usRcvBufferPos < MB_SER_PDU_SIZE_MAX )
         {
             ucRTUBuf[usRcvBufferPos++] = ucByte;
@@ -354,6 +359,7 @@ xMBRTUTimerT35Expired( void )
 
     vMBPortTimersDisable(  );
     eRcvState = STATE_RX_IDLE;
+    printf("t\n");
 
     return xNeedPoll;
 }

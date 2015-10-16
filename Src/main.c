@@ -140,6 +140,7 @@ int main(void)
         for (i = 0; i < 8; i++) {
            printf("0x%02X ", device[j][i]);
         }
+        printf("\n\r");
      }
   } else {
     printf("No devices on OneWire.\n\r");
@@ -223,7 +224,7 @@ void MX_TIM1_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig;
 
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = MB_TIMER_PRESCALER;
+  htim1.Init.Prescaler = 71;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 65535;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
