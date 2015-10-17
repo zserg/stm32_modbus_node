@@ -148,7 +148,7 @@ int main(void)
  
 
  // Modbus Init
-  if( MB_ENOERR != ( eStatus = eMBInit( MB_RTU, 0x0A, 1, 38400, MB_PAR_EVEN ) ) )
+  if( MB_ENOERR != ( eStatus = eMBInit( MB_RTU, 0x0A, 1, 38400, MB_PAR_NONE ) ) )
   {
       printf("MODBUS: Can not initialize\n\r");
       while(1);

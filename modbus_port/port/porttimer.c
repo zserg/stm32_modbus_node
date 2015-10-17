@@ -99,6 +99,7 @@ vMBPortTimersEnable(  )
 #endif  
     //TCX->TC_CHANNEL[TCCHANNEL].TC_IER = TC_IERX_CPAS;
     //TC_Start( TCX, 0 );
+     TIM1->CNT = 0;
     __HAL_TIM_ENABLE_IT(&htim1, TIM_IT_UPDATE);
     __HAL_TIM_ENABLE(&htim1);
 }

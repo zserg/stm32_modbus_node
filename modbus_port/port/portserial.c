@@ -90,8 +90,9 @@ vMBPortSerialEnable(BOOL xRxEnable, BOOL xTxEnable )
     {
         //USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IDR_TXRDY );
         //USART_EnableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
+//        HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_RESET);
         __HAL_UART_DISABLE_IT(&huart2, UART_IT_TXE);
-        __HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
+        __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);
     }
 }
 
@@ -150,7 +151,7 @@ vMBPortSerialClose( void )
 BOOL
 xMBPortSerialPutByte( CHAR ucByte )
 {
-    //USART1->US_THR = ucByte;
+    printf("-%x\n",ucByte);
     huart2.Instance->DR = ucByte;
     return TRUE;
 }
@@ -158,7 +159,6 @@ xMBPortSerialPutByte( CHAR ucByte )
 BOOL
 xMBPortSerialGetByte( CHAR * pucByte )
 {
-    //*pucByte = USART1->US_RHR;
     *pucByte = (CHAR) huart2.Instance->DR;
     return TRUE;
 }
@@ -206,6 +206,7 @@ vUSARTHandler( void )
   tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_TC);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
+     printf("End of tx\n");
       HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_RESET);
       __HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
   }

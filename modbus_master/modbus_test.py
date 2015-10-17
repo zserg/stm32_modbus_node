@@ -10,4 +10,5 @@ instrument.debug = True
 
 ## Read temperature (PV = ProcessValue) ##
 temperature = instrument.read_register(1, 1) # Registernumber, number of decimals
+temperature = instrument.read_register(12, 10) # Registernumber, number of decimals
 
