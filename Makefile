@@ -37,14 +37,13 @@ PROJECT        = main
 #LIBSDIRS    = $(STM32CUBEROOT)/Drivers
 LIBSDIRS    = ../../STM32Cube_FW_F1_V1.0.0/Drivers
 CORELIBDIR = $(LIBSDIRS)/CMSIS/Include
-RTOSLIBDIR = ./Middlewares/Third_Party/FreeRTOS/Source/include
+RTOSLIBDIR = ../../STM32Cube_FW_F1_V1.0.0/Middlewares/Third_Party/FreeRTOS/Source
 DEVDIR  = $(LIBSDIRS)/CMSIS/Device/ST/STM32F1xx
 STMSPDDIR    = $(LIBSDIRS)/STM32F1xx_HAL_Driver
 STMSPSRCDDIR = $(STMSPDDIR)/Src
 STMSPINCDDIR = $(STMSPDDIR)/Inc
 #DISCOVERY    = ../../STM32F0-Discovery_FW_V1.0.0/Utilities/STM32F0-Discovery
-RTOSSRCDIR = ./Middlewares/Third_Party/FreeRTOS/Source
-
+RTOSSRCDIR = ../../STM32Cube_FW_F1_V1.0.0/Middlewares/Third_Party/FreeRTOS/Source
 #list of src files to include in build process
 
 SRC  = ./Src/main.c
@@ -68,7 +67,7 @@ SRC += ./modbus/functions/mbfuncholding.c
 SRC += ./modbus/functions/mbfuncinput.c
 SRC += ./modbus/functions/mbfuncother.c
 SRC += ./modbus/functions/mbutils.c
-#SRC += ./Src/freertos.c
+SRC += ./Src/freertos.c
 #SRC += ./Src/usb_device.c
 #SRC += ./Src/usbd_conf.c
 #SRC += ./Src/usbd_desc.c
@@ -93,12 +92,12 @@ SRC += $(STMSPSRCDDIR)/stm32f1xx_hal_uart.c
 SRC += $(STMSPSRCDDIR)/stm32f1xx_hal_can.c
 
 SRC += $(DEVDIR)/Source/Templates/system_stm32f1xx.c
-#SRC += $(RTOSSRCDIR)/CMSIS_RTOS/cmsis_os.c
-#SRC += $(RTOSSRCDIR)/portable/GCC/ARM_CM3/port.c
-#SRC += $(RTOSSRCDIR)/queue.c
-#SRC += $(RTOSSRCDIR)/tasks.c
-#SRC += $(RTOSSRCDIR)/list.c
-#SRC += $(RTOSSRCDIR)/portable/MemMang/heap_1.c
+SRC += $(RTOSSRCDIR)/CMSIS_RTOS/cmsis_os.c
+SRC += $(RTOSSRCDIR)/portable/GCC/ARM_CM3/port.c
+SRC += $(RTOSSRCDIR)/queue.c
+SRC += $(RTOSSRCDIR)/tasks.c
+SRC += $(RTOSSRCDIR)/list.c
+SRC += $(RTOSSRCDIR)/portable/MemMang/heap_1.c
 #SRC += $(STMSPSRCDDIR)/stm32f1xx_adc.c
 #SRC += $(STMSPSRCDDIR)/stm32f1xx_cec.c
 #SRC += $(STMSPSRCDDIR)/stm32f1xx_crc.c
@@ -126,8 +125,10 @@ INCDIRS = $(DEVDIR)/Include \
 	  $(LIBSDIRS)/STM32F1xx_HAL_Driver/Inc \
 	  $(CORELIBDIR) \
           $(STMSPINCDDIR) \
-	  ./stm32f_hcsr04 \
+	  $(RTOSLIBDIR)/include \
+	  $(RTOSLIBDIR)/CMSIS_RTOS \
 	  ./stm32fonewire \
+	  ./stm32f_hcsr04 \
 	  ./modbus_port/port \
 	  ./modbus/include \
 	  ./modbus/rtu \

@@ -37,15 +37,17 @@
 
 /* USER CODE BEGIN Includes */
 #include "main.h"
-#include "stdio.h"
+#include "cmsis_os.h"
+//#include "stdio.h"
 #include "tm_stm32f4_onewire.h"
 #include "tm_stm32f4_ds18b20.h"
-#include "tm_stm32f4_hcsr04.h"
+
 #include "mb.h"
 #include "mbport.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+osThreadId defaultTaskHandle;
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
@@ -61,7 +63,6 @@ UART_HandleTypeDef huart2;
 
 
 TM_OneWire_t OneWire;
-TM_HCSR04_t HCSR04;
 
 
 static USHORT   usRegInputStart = REG_INPUT_START;
@@ -74,11 +75,14 @@ eMBErrorCode    eStatus;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
+void StartDefaultTask(void const * argument);
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
+void eMBPollCycle( void *pvParametrs );
+void OneWireCycle( void *pvParametrs );
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -133,52 +137,65 @@ int main(void)
     devices = TM_OneWire_Next(&OneWire);
   }
 
-  if (count > 0) {
-     printf("Devices found on 1-wire instance: %d\n\r", count);
-
-     for (j = 0; j < count; j++) {
-        for (i = 0; i < 8; i++) {
-           printf("0x%02X ", device[j][i]);
-        }
-        printf("\n\r");
-     }
-  } else {
-    printf("No devices on OneWire.\n\r");
-  }
- 
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 
  // Modbus Init
   if( MB_ENOERR != ( eStatus = eMBInit( MB_RTU, 0x0A, 1, 38400, MB_PAR_NONE ) ) )
   {
-      printf("MODBUS: Can not initialize\n\r");
       while(1);
   }
   else
   {      
       if( MB_ENOERR != ( eStatus = eMBSetSlaveID( 0x34, TRUE, ucSlaveID, 3 ) ) )
       {
-          printf("MODBUS: Can not set slave id. Check arguments\n\r");
           while(1);
       }
       else if( MB_ENOERR != ( eStatus = eMBEnable(  ) ) )
       {
-          printf("MODBUS: Enable failed\n\r");
           while(1);
       }
   }
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  
+  xTaskCreate( &eMBPollCycle,
+            "MBPollTask",
+            configMINIMAL_STACK_SIZE, 
+            NULL,
+            1,
+            NULL );
+  
+  xTaskCreate( &OneWireCycle,
+            "OneWireCycleTask",
+            configMINIMAL_STACK_SIZE, 
+            NULL,
+            1,
+            NULL );
+  
+  osKernelStart();
+   
+
+  /* Infinite loop */
+  while (1)
+  {
+
+  }
 
 //=====  Main Cycle =======================
-   while(1)      
-   {
+//   while(1)      
+//   {
 
       // Modbus FSM Poll
-      ( void )eMBPoll(  );
-      usRegInputBuf[0]++;
+//      ( void )eMBPoll(  );
+//      usRegInputBuf[0]++;
     
       // OneWire Access
 //      usRegHoldingBuf[0] = onewire_read_temperature(&OneWire,device[0]);
 
-   }
+ //  }
 //=====  End of Main Cycle =======================
     
     //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
@@ -189,6 +206,7 @@ int main(void)
  
 }
 
+/* USER CODE BEGIN 4 */
 
 /** System Clock Configuration
 */
@@ -216,6 +234,7 @@ void SystemClock_Config(void)
   __HAL_RCC_AFIO_CLK_ENABLE();
 
 }
+
 /* TIM1 init function */
 void MX_TIM1_Init(void)
 {
@@ -279,6 +298,20 @@ void MX_USART1_UART_Init(void)
 
 }
 
+ /* USER CODE BEGIN 4 */
+ void eMBPollCycle( void *pvParametrs ) {
+     for( ;; ) {
+     (void) eMBPoll();
+     }
+   }
+
+ void OneWireCycle( void *pvParametrs ) {
+     uint16_t tmp;
+     static uint8_t device[2][8];
+     for( ;; ) {
+      tmp = onewire_read_temperature(&OneWire,device[0]);
+     }
+   }
 
 /** Configure pins as 
         * Analog 
@@ -298,7 +331,7 @@ void MX_GPIO_Init(void)
   __GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pins : PA4 PA5 PA8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_8;
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -434,6 +467,24 @@ eMBRegDiscreteCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNDiscrete )
 {
     return MB_ENOREG;
 }
+
+void StartDefaultTask(void const * argument)
+{
+
+  /* USER CODE BEGIN 5 */
+ 
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+
+  /* USER CODE END 5 */ 
+
+}
+ 
+
+
 /* USER CODE END 4 */
 
 #ifdef USE_FULL_ASSERT

@@ -136,7 +136,6 @@ eMBRTUStart( void )
     vMBPortTimersEnable(  );
 
     EXIT_CRITICAL_SECTION(  );
-    printf("0\n");
 }
 
 void
@@ -276,7 +275,6 @@ xMBRTUReceiveFSM( void )
         if( usRcvBufferPos < MB_SER_PDU_SIZE_MAX )
         {
             ucRTUBuf[usRcvBufferPos++] = ucByte;
-            //printf("+%x\n",ucByte);
         }
         else
         {
@@ -356,7 +354,6 @@ xMBRTUTimerT35Expired( void )
 
     vMBPortTimersDisable(  );
     eRcvState = STATE_RX_IDLE;
-    //printf("t\n");
 
     return xNeedPoll;
 }

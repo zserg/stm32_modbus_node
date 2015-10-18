@@ -32,6 +32,7 @@
 #define _MB_H
 
 #include "port.h"
+#include "cmsis_os.h"
 
 #ifdef __cplusplus
 PR_BEGIN_EXTERN_C
@@ -218,7 +219,7 @@ eMBErrorCode    eMBDisable( void );
  *   returns eMBErrorCode::MB_EILLSTATE. Otherwise it returns 
  *   eMBErrorCode::MB_ENOERR.
  */
-eMBErrorCode    eMBPoll( void );
+eMBErrorCode    eMBPoll( void);
 
 /*! \ingroup modbus
  * \brief Configure the slave id of the device.

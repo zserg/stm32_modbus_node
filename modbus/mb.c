@@ -31,6 +31,7 @@
 /* ----------------------- System includes ----------------------------------*/
 #include "stdlib.h"
 #include "string.h"
+#include "cmsis_os.h"
 
 /* ----------------------- Platform includes --------------------------------*/
 #include "port.h"
@@ -329,7 +330,7 @@ eMBDisable( void )
 }
 
 eMBErrorCode
-eMBPoll( void )
+eMBPoll(  void )
 {
     static UCHAR   *ucMBFrame;
     static UCHAR    ucRcvAddress;
