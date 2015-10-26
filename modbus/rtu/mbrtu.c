@@ -239,7 +239,7 @@ xMBRTUReceiveFSM( void )
     /* Always read the character. */
     ( void )xMBPortSerialGetByte( ( CHAR * ) & ucByte );
     HAL_UART_Transmit(&huart1, "r" , 1, 0xFFFF);
-    HAL_UART_Transmit(&huart1, ucByte , 1, 0xFFFF);
+//    HAL_UART_Transmit(&huart1, ucByte , 1, 0xFFFF);
 
     switch ( eRcvState )
     {
@@ -247,14 +247,14 @@ xMBRTUReceiveFSM( void )
          * wait until the frame is finished.
          */
     case STATE_RX_INIT:
-        //vMBPortTimersEnable(  );
+        vMBPortTimersEnable(  );
         break;
 
         /* In the error state we wait until all characters in the
          * damaged frame are transmitted.
          */
     case STATE_RX_ERROR:
-        //vMBPortTimersEnable(  );
+        vMBPortTimersEnable(  );
         break;
 
         /* In the idle state we wait for a new character. If a character
@@ -267,7 +267,7 @@ xMBRTUReceiveFSM( void )
         eRcvState = STATE_RX_RCV;
 
         /* Enable t3.5 timers. */
-        //vMBPortTimersEnable(  );
+        vMBPortTimersEnable(  );
         break;
 
         /* We are currently receiving a frame. Reset the timer after
@@ -284,7 +284,7 @@ xMBRTUReceiveFSM( void )
         {
             eRcvState = STATE_RX_ERROR;
         }
-        //vMBPortTimersEnable(  );
+        vMBPortTimersEnable(  );
         break;
     }
     return xTaskNeedSwitch;

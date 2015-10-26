@@ -107,7 +107,7 @@ SRC += $(RTOSSRCDIR)/portable/MemMang/heap_1.c
 #SRC += $(STMSPSRCDDIR)/stm32f1xx_misc.c
 
 # List assembly startup source file here
-STARTUP = ./startup/startup_stm32f103c8.S
+STARTUP = ./startup/startup_stm32f103c8.s
 
 # List all directories here
 INCDIRS = $(DEVDIR)/Include \
@@ -146,7 +146,7 @@ LIB     = $(patsubst %,-l%, $(LIBS))
 ## run from Flash
 DEFS    = $(DDEFS) -DRUN_FROM_FLASH=1
 
-OBJS  = $(STARTUP:.S=.o) $(SRC:.c=.o)
+OBJS  = $(STARTUP:.s=.o) $(SRC:.c=.o)
 MCFLAGS = -mcpu=$(MCU)
  
 ASFLAGS = $(MCFLAGS) -g -ggdb -mthumb  -Wa,-amhls=$(<:.s=.lst) 
@@ -166,8 +166,6 @@ all: $(OBJS) $(PROJECT).elf  $(PROJECT).hex $(PROJECT).bin
 %o: %s
 	$(AS) -c $(ASFLAGS) $< -o $@
 
-%o: %S
-	$(AS) -c $(ASFLAGS) $< -o $@
 
 %elf: $(OBJS)
 	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
