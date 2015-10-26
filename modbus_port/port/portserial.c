@@ -163,7 +163,7 @@ void vUARTHandler( UART_HandleTypeDef *husart )
   tmp_it_source = __HAL_UART_GET_IT_SOURCE(husart, UART_IT_TXE);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
-  HAL_UART_Transmit(&huart1, "s1" , 2, 0xFFFF);
+  //HAL_UART_Transmit(&huart1, "s1" , 2, 0xFFFF);
         pxMBFrameCBTransmitterEmpty(  );
   }
   

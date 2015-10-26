@@ -238,7 +238,7 @@ xMBRTUReceiveFSM( void )
 
     /* Always read the character. */
     ( void )xMBPortSerialGetByte( ( CHAR * ) & ucByte );
-    HAL_UART_Transmit(&huart1, "r" , 1, 0xFFFF);
+    //HAL_UART_Transmit(&huart1, "r" , 1, 0xFFFF);
 //    HAL_UART_Transmit(&huart1, ucByte , 1, 0xFFFF);
 
     switch ( eRcvState )

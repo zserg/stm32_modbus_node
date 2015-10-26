@@ -51,7 +51,7 @@ xMBPortEventInit( void )
 BOOL
 xMBPortEventPost( eMBEventType eEvent )
 {
-  HAL_UART_Transmit(&huart1, "P\n\r" , 3, 0xFFFF);
+  //HAL_UART_Transmit(&huart1, "P\n\r" , 3, 0xFFFF);
    portBASE_TYPE taskWoken;
    xQueueSendFromISR(mbEventQueue, &eEvent, &taskWoken);
    return TRUE;
@@ -60,10 +60,10 @@ xMBPortEventPost( eMBEventType eEvent )
 BOOL
 xMBPortEventGet( eMBEventType * eEvent )
 {
-  HAL_UART_Transmit(&huart1, "G" , 1, 0xFFFF);
+  //HAL_UART_Transmit(&huart1, "G" , 1, 0xFFFF);
 
  xQueueReceive(mbEventQueue, eEvent, portMAX_DELAY);
-  HAL_UART_Transmit(&huart1, "g" , 1, 0xFFFF);
+  //HAL_UART_Transmit(&huart1, "g" , 1, 0xFFFF);
  return TRUE;
 
 

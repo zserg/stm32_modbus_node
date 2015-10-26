@@ -64,8 +64,8 @@ xMBPortTimersInit( USHORT usTim1Timerout50us )
 #endif
     __HAL_TIM_DISABLE_IT(&htim1, TIM_IT_UPDATE);
 
-    //htim1.Init.Period = ( 50 * usTim1Timerout50us );
-    htim1.Init.Period = ( 50 * 1000 );
+    htim1.Init.Period = ( 50 * usTim1Timerout50us );
+    //htim1.Init.Period = ( 50 * 1000 );
     HAL_TIM_Base_Init(&htim1);
 
     HAL_NVIC_ClearPendingIRQ(TIM1_UP_IRQn);
@@ -87,11 +87,11 @@ vMBPortTimerClose( void )
 void
 vMBPortTimersEnable(  )
 {
-  HAL_UART_Transmit(&huart1, "t" , 1, 0xFFFF);
+//  HAL_UART_Transmit(&huart1, "t" , 1, 0xFFFF);
 #if MB_TIMER_DEBUG == 1
     PIO_Set( &xTimerDebugPins[0] );  
 #endif  
-    // TIM1->CNT = 0;
+      TIM1->CNT = 0;
     __HAL_TIM_ENABLE_IT(&htim1, TIM_IT_UPDATE);
     __HAL_TIM_ENABLE(&htim1);
 }
@@ -115,7 +115,7 @@ vMBPortTimersDelay( USHORT usTimeOutMS )
 void
 TCX_IRQHANDLER( void )
 {
-   HAL_UART_Transmit(&huart1,  "T", 1, 0xFFFF);
+   //HAL_UART_Transmit(&huart1,  "T", 1, 0xFFFF);
     __HAL_TIM_DISABLE(&htim1);
     __HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
   
