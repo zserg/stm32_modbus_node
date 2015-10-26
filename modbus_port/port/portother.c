@@ -42,22 +42,6 @@
 static ULONG    ulNesting;
 
 /* ----------------------- Start implementation -----------------------------*/
-void
-vMBPortEnterCritical( void )
-{
-    __disable_irq(  );
-    ulNesting++;
-}
-
-void
-vMBPortExitCritical( void )
-{
-    ulNesting--;
-    if( 0 == ulNesting )
-    {
-        __enable_irq();
-    }
-}
 
 void
 vMBPortClose( void )

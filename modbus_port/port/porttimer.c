@@ -53,40 +53,33 @@ const static Pin xTimerDebugPins[] = { TIMER_PIN };
 #endif
 extern TIM_HandleTypeDef htim1;
 extern uint32_t uwTick;
+extern UART_HandleTypeDef huart1;
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
 xMBPortTimersInit( USHORT usTim1Timerout50us )
 {
+  HAL_UART_Transmit(&huart1, "_TI_" , 4, 0xFFFF);
 #if MB_TIMER_DEBUG == 1
     PIO_Configure( xTimerDebugPins, PIO_LISTSIZE( xTimerDebugPins ) );
 #endif
-   // NVIC_DisableIRQ( TCXIRQ );
     __HAL_TIM_DISABLE_IT(&htim1, TIM_IT_UPDATE);
 
-  //  PMC_EnablePeripheral( ID_TC0 );
-    //TC_Configure( TCX, 0, TC_CMRX_WAVE | TC_CMRX_TCCLKS_TIMER_DIV4_CLOCK | TC_CMRX_WAVESEL_UP_RC | TC_CMRX_CPCSTOP );
-    //TCX->TC_CHANNEL[TCCHANNEL].TC_RA = ( MB_TIMER_TICKS * usTim1Timerout50us ) / ( MB_50US_TICKS );
-    //TCX->TC_CHANNEL[TCCHANNEL].TC_RC = ( MB_TIMER_TICKS * usTim1Timerout50us ) / ( MB_50US_TICKS );
-    //htim1.Init.Period = ( MB_TIMER_TICKS * usTim1Timerout50us ) / ( MB_50US_TICKS );
-    htim1.Init.Period = ( 50 * usTim1Timerout50us );
+    //htim1.Init.Period = ( 50 * usTim1Timerout50us );
+    htim1.Init.Period = ( 50 * 1000 );
     HAL_TIM_Base_Init(&htim1);
 
-    //NVIC_ClearPendingIRQ( TCXIRQ );
     HAL_NVIC_ClearPendingIRQ(TIM1_UP_IRQn);
     __HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
-    //NVIC_SetPriority( TCXIRQ, 0xF << 4 );
-    HAL_NVIC_SetPriority(TIM1_UP_IRQn, 0x0F, 0);
-    //NVIC_EnableIRQ( TCXIRQ );
-    __HAL_TIM_ENABLE_IT(&htim1, TIM_IT_UPDATE);
 
     return TRUE;
 }
 
+
+
+
 void 
 vMBPortTimerClose( void )
 {
-    //NVIC_DisableIRQ( TCXIRQ );
-    //PMC_DisablePeripheral( ID_TC0 );
     __HAL_TIM_DISABLE_IT(&htim1, TIM_IT_UPDATE);
     __HAL_TIM_DISABLE(&htim1);
 }
@@ -94,12 +87,11 @@ vMBPortTimerClose( void )
 void
 vMBPortTimersEnable(  )
 {
+  HAL_UART_Transmit(&huart1, "t" , 1, 0xFFFF);
 #if MB_TIMER_DEBUG == 1
     PIO_Set( &xTimerDebugPins[0] );  
 #endif  
-    //TCX->TC_CHANNEL[TCCHANNEL].TC_IER = TC_IERX_CPAS;
-    //TC_Start( TCX, 0 );
-     TIM1->CNT = 0;
+    // TIM1->CNT = 0;
     __HAL_TIM_ENABLE_IT(&htim1, TIM_IT_UPDATE);
     __HAL_TIM_ENABLE(&htim1);
 }
@@ -107,7 +99,6 @@ vMBPortTimersEnable(  )
 void
 vMBPortTimersDisable(  )
 {
-    //TC_Stop( TCX, 0 );
     __HAL_TIM_DISABLE(&htim1);
 #if MB_TIMER_DEBUG == 1
     PIO_Clear( &xTimerDebugPins[0] );
@@ -124,6 +115,7 @@ vMBPortTimersDelay( USHORT usTimeOutMS )
 void
 TCX_IRQHANDLER( void )
 {
+   HAL_UART_Transmit(&huart1,  "T", 1, 0xFFFF);
     __HAL_TIM_DISABLE(&htim1);
     __HAL_TIM_CLEAR_IT(&htim1, TIM_IT_UPDATE);
   

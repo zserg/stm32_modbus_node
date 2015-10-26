@@ -45,8 +45,8 @@
 #define PR_BEGIN_EXTERN_C           extern "C" {
 #define	PR_END_EXTERN_C             }
 
-#define ENTER_CRITICAL_SECTION( )   vMBPortEnterCritical()
-#define EXIT_CRITICAL_SECTION( )    vMBPortExitCritical()
+#define ENTER_CRITICAL_SECTION( ) taskENTER_CRITICAL()
+#define EXIT_CRITICAL_SECTION( ) taskEXIT_CRITICAL()
 
 #define assert( x )
 

@@ -31,37 +31,40 @@
 /* ----------------------- Modbus includes ----------------------------------*/
 #include "mb.h"
 #include "mbport.h"
+#include "cmsis_os.h"
+#include "stm32f1xx_hal.h"
 
 /* ----------------------- Variables ----------------------------------------*/
 static eMBEventType eQueuedEvent;
 static BOOL     xEventInQueue;
+xQueueHandle mbEventQueue;
+extern UART_HandleTypeDef huart1;
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
 xMBPortEventInit( void )
 {
-    xEventInQueue = FALSE;
-    return TRUE;
+  mbEventQueue = xQueueCreate(1, sizeof(eMBEventType));
+  return TRUE;
 }
 
 BOOL
 xMBPortEventPost( eMBEventType eEvent )
 {
-    xEventInQueue = TRUE;
-    eQueuedEvent = eEvent;
-    return TRUE;
+  HAL_UART_Transmit(&huart1, "P\n\r" , 3, 0xFFFF);
+   portBASE_TYPE taskWoken;
+   xQueueSendFromISR(mbEventQueue, &eEvent, &taskWoken);
+   return TRUE;
 }
 
 BOOL
 xMBPortEventGet( eMBEventType * eEvent )
 {
-    BOOL            xEventHappened = FALSE;
+  HAL_UART_Transmit(&huart1, "G" , 1, 0xFFFF);
 
-    if( xEventInQueue )
-    {
-        *eEvent = eQueuedEvent;
-        xEventInQueue = FALSE;
-        xEventHappened = TRUE;
-    }
-    return xEventHappened;
+ xQueueReceive(mbEventQueue, eEvent, portMAX_DELAY);
+  HAL_UART_Transmit(&huart1, "g" , 1, 0xFFFF);
+ return TRUE;
+
+
 }

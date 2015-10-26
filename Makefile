@@ -34,27 +34,27 @@ DDEFS = -D$(DEVICE) -DUSE_STDPERIPH_DRIVER -DGCC_ARMCM3
 PROJECT        = main
  
 # List C source files here
-#LIBSDIRS    = $(STM32CUBEROOT)/Drivers
-LIBSDIRS    = ../../STM32Cube_FW_F1_V1.0.0/Drivers
+LIBSDIRS    = $(STM32CUBEROOT)/Drivers
 CORELIBDIR = $(LIBSDIRS)/CMSIS/Include
-RTOSLIBDIR = ../../STM32Cube_FW_F1_V1.0.0/Middlewares/Third_Party/FreeRTOS/Source
+RTOSLIBDIR = $(STM32CUBEROOT)/Middlewares/Third_Party/FreeRTOS/Source
 DEVDIR  = $(LIBSDIRS)/CMSIS/Device/ST/STM32F1xx
 STMSPDDIR    = $(LIBSDIRS)/STM32F1xx_HAL_Driver
 STMSPSRCDDIR = $(STMSPDDIR)/Src
 STMSPINCDDIR = $(STMSPDDIR)/Inc
-#DISCOVERY    = ../../STM32F0-Discovery_FW_V1.0.0/Utilities/STM32F0-Discovery
-RTOSSRCDIR = ../../STM32Cube_FW_F1_V1.0.0/Middlewares/Third_Party/FreeRTOS/Source
+RTOSSRCDIR = $(STM32CUBEROOT)/Middlewares/Third_Party/FreeRTOS/Source
 #list of src files to include in build process
 
 SRC  = ./Src/main.c
+SRC += ./Src/usart_log.c
 SRC += ./Src/stm32f1xx_it.c
 SRC += ./Src/stm32f1xx_hal_msp.c
-SRC += ./stm32fonewire/tm_stm32f4_onewire.c
-SRC += ./stm32fonewire/tm_stm32f4_ds18b20.c
-SRC += ./stm32f_hcsr04/tm_stm32f4_hcsr04.c
+#SRC += ./stm32fonewire/tm_stm32f4_onewire.c
+#SRC += ./stm32fonewire/tm_stm32f4_ds18b20.c
+#SRC += ./stm32f_hcsr04/tm_stm32f4_hcsr04.c
 SRC += ./modbus_port/port/portevent.c
 SRC += ./modbus_port/port/portother.c
 SRC += ./modbus_port/port/portserial.c
+#SRC += ./modbus_port/port/portserial_new.c
 SRC += ./modbus_port/port/porttimer.c
 SRC += ./modbus/mb.c
 SRC += ./modbus/rtu/mbcrc.c
@@ -68,18 +68,7 @@ SRC += ./modbus/functions/mbfuncinput.c
 SRC += ./modbus/functions/mbfuncother.c
 SRC += ./modbus/functions/mbutils.c
 SRC += ./Src/freertos.c
-#SRC += ./Src/usb_device.c
-#SRC += ./Src/usbd_conf.c
-#SRC += ./Src/usbd_desc.c
-#SRC += ./Src/usbd_cdc_if.c
 SRC += ./Src/syscalls.c
-#SRC += ./Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c
-#SRC += ./Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
-#SRC += ./Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
-#SRC += ./Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
-#SRC += $(STMSPSRCDDIR)/stm32f1xx_hal_pcd.c
-#SRC += $(STMSPSRCDDIR)/stm32f1xx_ll_usb.c
-#SRC += $(STMSPSRCDDIR)/stm32f1xx_hal_pcd_ex.c
 SRC += $(STMSPSRCDDIR)/stm32f1xx_hal_rcc_ex.c
 SRC += $(STMSPSRCDDIR)/stm32f1xx_hal_gpio.c
 SRC += $(STMSPSRCDDIR)/stm32f1xx_hal.c
@@ -118,7 +107,7 @@ SRC += $(RTOSSRCDIR)/portable/MemMang/heap_1.c
 #SRC += $(STMSPSRCDDIR)/stm32f1xx_misc.c
 
 # List assembly startup source file here
-STARTUP = ./startup/startup_stm32f103c8.s
+STARTUP = ./startup/startup_stm32f103c8.S
 
 # List all directories here
 INCDIRS = $(DEVDIR)/Include \
@@ -157,7 +146,7 @@ LIB     = $(patsubst %,-l%, $(LIBS))
 ## run from Flash
 DEFS    = $(DDEFS) -DRUN_FROM_FLASH=1
 
-OBJS  = $(STARTUP:.s=.o) $(SRC:.c=.o)
+OBJS  = $(STARTUP:.S=.o) $(SRC:.c=.o)
 MCFLAGS = -mcpu=$(MCU)
  
 ASFLAGS = $(MCFLAGS) -g -ggdb -mthumb  -Wa,-amhls=$(<:.s=.lst) 
@@ -175,6 +164,9 @@ all: $(OBJS) $(PROJECT).elf  $(PROJECT).hex $(PROJECT).bin
 	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 
 %o: %s
+	$(AS) -c $(ASFLAGS) $< -o $@
+
+%o: %S
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 %elf: $(OBJS)
@@ -214,5 +206,5 @@ clean:
 	-rm -rf $(PROJECT).bin
 	-rm -rf $(SRC:.c=.lst)
 	-rm -rf $(SRC:.c=.d)
-	-rm -rf $(ASRC:.s=.lst)
+	-rm -rf $(ASRC:.S=.lst)
 # *** EOF ***

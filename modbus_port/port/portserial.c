@@ -47,6 +47,7 @@
 #define USARTDEPin_GPIO_PIN GPIO_PIN_4
 
 extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart1;
 
 void
 vMBPortSerialEnable(BOOL xRxEnable, BOOL xTxEnable )
@@ -54,43 +55,25 @@ vMBPortSerialEnable(BOOL xRxEnable, BOOL xTxEnable )
 
     if( xRxEnable )
     {
-        //USART_SetReceiverEnabled( xUSARTHWMappings[ucUsedPort].pUsart, 1 );
-        //USART_EnableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IDR_RXRDY );
         SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
         __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
 
     }
     else
     {
-        //USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IDR_RXRDY );
-        //USART_SetReceiverEnabled( xUSARTHWMappings[ucUsedPort].pUsart, 0 );
         __HAL_UART_DISABLE_IT(&huart2, UART_IT_RXNE);
         CLEAR_BIT(huart2.Instance->CR1, USART_CR1_RE);
     }
 
     if( xTxEnable )
     {
-        //if( NULL != xUSARTHWMappings[ucUsedPort].USARTNotREPin )
-        //{
-        //    PIO_Set( xUSARTHWMappings[ucUsedPort].USARTNotREPin );
-       // }
-        //if( NULL != xUSARTHWMappings[ucUsedPort].USARTDEPin )
-        //{
-        //    PIO_Set( xUSARTHWMappings[ucUsedPort].USARTDEPin );
-        //}
         HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_SET);
-        //USART_SetTransmitterEnabled( xUSARTHWMappings[ucUsedPort].pUsart, 1 );
-        //USART_EnableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXRDY );
-        //USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
         SET_BIT(huart2.Instance->CR1, USART_CR1_TE);
         __HAL_UART_ENABLE_IT(&huart2, UART_IT_TXE);
         __HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
     }
     else
     {
-        //USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IDR_TXRDY );
-        //USART_EnableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
-//        HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_RESET);
         __HAL_UART_DISABLE_IT(&huart2, UART_IT_TXE);
         __HAL_UART_ENABLE_IT(&huart2, UART_IT_TC);
     }
@@ -162,51 +145,35 @@ xMBPortSerialGetByte( CHAR * pucByte )
     return TRUE;
 }
 
-void
-vUSARTHandler( void )
+void vUARTHandler( UART_HandleTypeDef *husart )
 {
   uint32_t tmp_flag, tmp_it_source;
-  //  if( uiCSRMasked & US_CSR_RXRDY )
-  //  {
-  //      pxMBFrameCBByteReceived(  );
-  //  }
-  tmp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_RXNE);
-  tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_RXNE);
+  uint8_t data;
+  
+  tmp_flag = __HAL_UART_GET_FLAG(husart, UART_FLAG_RXNE);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(husart, UART_IT_RXNE);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
+  HAL_UART_Transmit(&huart1, "s0" , 2, 0xFFFF);
 	  pxMBFrameCBByteReceived(  );
   }
 
-  //if( uiCSRMasked & US_CSR_TXRDY )
-  //  {
-  //      pxMBFrameCBTransmitterEmpty(  );
-  //  }
   
-  tmp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_TXE);
-  tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_TXE);
+  tmp_flag = __HAL_UART_GET_FLAG(husart, UART_FLAG_TXE);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(husart, UART_IT_TXE);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
+  HAL_UART_Transmit(&huart1, "s1" , 2, 0xFFFF);
         pxMBFrameCBTransmitterEmpty(  );
   }
-
-  //  if( uiCSRMasked & US_CSR_TXEMPTY )
-  //  {
-  //      if( NULL != xUSARTHWMappings[ucUsedPort].USARTDEPin )
-  //      {
-  //          PIO_Clear( xUSARTHWMappings[ucUsedPort].USARTDEPin );
-  //      }
-  //      if( NULL != xUSARTHWMappings[ucUsedPort].USARTNotREPin )
-  //      {
-  //          PIO_Clear( xUSARTHWMappings[ucUsedPort].USARTNotREPin );
-  //      }
-  //      USART_DisableIt( xUSARTHWMappings[ucUsedPort].pUsart, US_IER_TXEMPTY );
-  //  }
-  tmp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_TC);
-  tmp_it_source = __HAL_UART_GET_IT_SOURCE(&huart2, UART_IT_TC);
+  
+  tmp_flag = __HAL_UART_GET_FLAG(husart, UART_FLAG_TC);
+  tmp_it_source = __HAL_UART_GET_IT_SOURCE(husart, UART_IT_TC);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
+  HAL_UART_Transmit(&huart1, "s2" , 2, 0xFFFF);
       HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_RESET);
-      __HAL_UART_DISABLE_IT(&huart2, UART_IT_TC);
+      __HAL_UART_DISABLE_IT(husart, UART_IT_TC);
   }
 
 }
