@@ -1,0 +1,9 @@
+python3 -m venv --without-pip venv
+source ./venv/bin/activate
+wget https://bootstrap.pypa.io/ez_setup.py -O - | python
+wget https://bootstrap.pypa.io/get-pip.py -O - | python
+pip install minimalmodbus
+
+deactivate
+source ./venv/bin/activate
+
