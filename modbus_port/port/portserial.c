@@ -52,9 +52,11 @@ extern UART_HandleTypeDef huart1;
 void
 vMBPortSerialEnable(BOOL xRxEnable, BOOL xTxEnable )
 {
+  HAL_UART_Transmit(&huart1, "e\n\r" , 3, 0xFFFF);
 
     if( xRxEnable )
     {
+       HAL_UART_Transmit(&huart1, "E\n\r" , 3, 0xFFFF);
         SET_BIT(huart2.Instance->CR1, USART_CR1_RE);
         __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
 
@@ -83,6 +85,7 @@ BOOL
 xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity eParity )
 {
     BOOL            bStatus = FALSE;
+  HAL_UART_Transmit(&huart1, "i\n\r" , 3, 0xFFFF);
 
     huart2.Instance = USART2;
     huart2.Init.BaudRate = ulBaudRate;
@@ -141,7 +144,7 @@ xMBPortSerialPutByte( CHAR ucByte )
 BOOL
 xMBPortSerialGetByte( CHAR * pucByte )
 {
-    *pucByte = (CHAR) huart2.Instance->DR;
+    *pucByte = (CHAR)  huart2.Instance->DR;
     return TRUE;
 }
 
@@ -150,6 +153,7 @@ void vUARTHandler( UART_HandleTypeDef *husart )
   uint32_t tmp_flag, tmp_it_source;
   uint8_t data;
   
+  //HAL_UART_Transmit(&huart1, "!\n\r" , 3, 0xFFFF);
   tmp_flag = __HAL_UART_GET_FLAG(husart, UART_FLAG_RXNE);
   tmp_it_source = __HAL_UART_GET_IT_SOURCE(husart, UART_IT_RXNE);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
@@ -171,7 +175,7 @@ void vUARTHandler( UART_HandleTypeDef *husart )
   tmp_it_source = __HAL_UART_GET_IT_SOURCE(husart, UART_IT_TC);
   if((tmp_flag != RESET) && (tmp_it_source != RESET))
   { 
-  HAL_UART_Transmit(&huart1, "s2" , 2, 0xFFFF);
+  //HAL_UART_Transmit(&huart1, "s2" , 2, 0xFFFF);
       HAL_GPIO_WritePin(USARTDEPin_GPIOx, USARTDEPin_GPIO_PIN, GPIO_PIN_RESET);
       __HAL_UART_DISABLE_IT(husart, UART_IT_TC);
   }

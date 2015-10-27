@@ -43,6 +43,7 @@
 
 #include "mbcrc.h"
 #include "mbport.h"
+#include "stm32f1xx_hal.h"
 
 #if MB_ASCII_ENABLED > 0
 
@@ -99,6 +100,7 @@ static volatile eMBBytePos eBytePos;
 
 static volatile UCHAR *pucSndBufferCur;
 static volatile USHORT usSndBufferCount;
+extern UART_HandleTypeDef huart1;
 
 static volatile UCHAR ucLRC;
 static volatile UCHAR ucMBLFCharacter;
@@ -113,7 +115,8 @@ eMBASCIIInit( UCHAR ucSlaveAddress, UCHAR ucPort, ULONG ulBaudRate, eMBParity eP
     ENTER_CRITICAL_SECTION(  );
     ucMBLFCharacter = MB_ASCII_DEFAULT_LF;
 
-    if( xMBPortSerialInit( ucPort, ulBaudRate, 7, eParity ) != TRUE )
+    //if( xMBPortSerialInit( ucPort, ulBaudRate, 7, eParity ) != TRUE )
+    if( xMBPortSerialInit( ucPort, ulBaudRate, 8, eParity ) != TRUE )
     {
         eStatus = MB_EPORTERR;
     }
@@ -121,6 +124,7 @@ eMBASCIIInit( UCHAR ucSlaveAddress, UCHAR ucPort, ULONG ulBaudRate, eMBParity eP
     {
         eStatus = MB_EPORTERR;
     }
+    HAL_UART_Transmit(&huart1, "x\n\r" , 3, 0xFFFF);
 
     EXIT_CRITICAL_SECTION(  );
 
@@ -130,18 +134,20 @@ eMBASCIIInit( UCHAR ucSlaveAddress, UCHAR ucPort, ULONG ulBaudRate, eMBParity eP
 void
 eMBASCIIStart( void )
 {
+    HAL_UART_Transmit(&huart1, "1\n\r" , 3, 0xFFFF);
     ENTER_CRITICAL_SECTION(  );
     vMBPortSerialEnable( TRUE, FALSE );
     eRcvState = STATE_RX_IDLE;
     EXIT_CRITICAL_SECTION(  );
 
     /* No special startup required for ASCII. */
-    ( void )xMBPortEventPost( EV_READY );
+    ( void )xMBPortFirstEventPost( EV_READY );
 }
 
 void
 eMBASCIIStop( void )
 {
+    HAL_UART_Transmit(&huart1, "2\n\r" , 3, 0xFFFF);
     ENTER_CRITICAL_SECTION(  );
     vMBPortSerialEnable( FALSE, FALSE );
     vMBPortTimersDisable(  );
@@ -228,6 +234,8 @@ xMBASCIIReceiveFSM( void )
     assert( eSndState == STATE_TX_IDLE );
 
     ( void )xMBPortSerialGetByte( ( CHAR * ) & ucByte );
+    //HAL_UART_Transmit(&huart1, "r" , 1, 0xFFFF);
+    HAL_UART_Transmit(&huart1, &ucByte , 1, 0xFFFF);
     switch ( eRcvState )
     {
         /* A new character is received. If the character is a ':' the input

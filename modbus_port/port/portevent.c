@@ -58,6 +58,15 @@ xMBPortEventPost( eMBEventType eEvent )
 }
 
 BOOL
+xMBPortFirstEventPost( eMBEventType eEvent )
+{
+  //HAL_UART_Transmit(&huart1, "P\n\r" , 3, 0xFFFF);
+   portBASE_TYPE taskWoken;
+   xQueueSend(mbEventQueue, &eEvent, portMAX_DELAY);
+   return TRUE;
+}
+
+BOOL
 xMBPortEventGet( eMBEventType * eEvent )
 {
   //HAL_UART_Transmit(&huart1, "G" , 1, 0xFFFF);

@@ -115,18 +115,20 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   //MX_USART2_UART_Init();
+  xUsartLogQueue = xQueueCreate(3, sizeof(xMessage));
 
   /* USER CODE BEGIN 2 */
   HAL_UART_Transmit(&huart1, (uint8_t*) "Start\n\r", 7, 0xFFFF);
  
   // Modbus Init
-  if( MB_ENOERR != ( eStatus = eMBInit( MB_RTU, 0x0A, 1, 38400, MB_PAR_NONE ) ) )
+  if( MB_ENOERR != ( eStatus = eMBInit( MB_ASCII, 0x0A, 1, 38400, MB_PAR_NONE ) ) )
   {
      HAL_UART_Transmit(&huart1, (uint8_t*) "Err1\n\r", 6, 0xFFFF);
       while(1);
   }
   else
   {      
+     HAL_UART_Transmit(&huart1, (uint8_t*) "good\n\r", 6, 0xFFFF);
       if( MB_ENOERR != ( eStatus = eMBSetSlaveID( 0x34, TRUE, ucSlaveID, 3 ) ) )
       {
           HAL_UART_Transmit(&huart1, (uint8_t*) "Err1\n\r", 6, 0xFFFF);
@@ -138,7 +140,8 @@ int main(void)
           while(1);
       }
   }
-  HAL_UART_Transmit(&huart2, (uint8_t*) "0123\n\r", 4, 0xFFFF);
+  HAL_UART_Transmit(&huart1, (uint8_t*) "_Start\n\r", 7, 0xFFFF);
+  //HAL_UART_Transmit(&huart2, (uint8_t*) "0123\n\r", 4, 0xFFFF);
 
   /* USER CODE END 2 */
 
@@ -177,7 +180,6 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  xUsartLogQueue = xQueueCreate(3, sizeof(xMessage));
   /* USER CODE END RTOS_QUEUES */
  
 
@@ -371,7 +373,7 @@ void vTask1(void *pvParameters)
  
 void vMBPollTask(void *pvParameters)
 {
-    //UsartLog(3, 0);
+    UsartLog(3, 0);
   
   for(;;)  eMBPoll(); 
 }
