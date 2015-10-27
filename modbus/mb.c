@@ -345,7 +345,7 @@ eMBPoll(  void )
     eMBEventType    eEvent;
 
     /* Check if the protocol stack is ready. */
-    HAL_UART_Transmit(&huart1, "C" , 1, 0xFFFF);
+    //HAL_UART_Transmit(&huart1, "C" , 1, 0xFFFF);
     if( eMBState != STATE_ENABLED )
     {
         return MB_EILLSTATE;
@@ -353,7 +353,7 @@ eMBPoll(  void )
 
     /* Check if there is a event available. If not return control to caller.
      * Otherwise we will handle the event. */
-    HAL_UART_Transmit(&huart1, "A" , 1, 0xFFFF);
+    //HAL_UART_Transmit(&huart1, "A" , 1, 0xFFFF);
     if( xMBPortEventGet( &eEvent ) == TRUE )
     {
        HAL_UART_Transmit(&huart1, "B" , 1, 0xFFFF);
@@ -376,7 +376,9 @@ eMBPoll(  void )
             break;
 
         case EV_EXECUTE:
+            HAL_UART_Transmit(&huart1, "Ex\n\r" , 4, 0xFFFF);
             ucFunctionCode = ucMBFrame[MB_PDU_FUNC_OFF];
+            HAL_UART_Transmit(&huart1, &ucFunctionCode , 1, 0xFFFF);
             eException = MB_EX_ILLEGAL_FUNCTION;
             for( i = 0; i < MB_FUNC_HANDLERS_MAX; i++ )
             {

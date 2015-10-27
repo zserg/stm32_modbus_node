@@ -39,6 +39,8 @@
 /* USER CODE BEGIN Includes */
 #include "usart_log.h"
 #include "mb.h"
+#include "tm_stm32f4_onewire.h"
+#include "tm_stm32f4_ds18b20.h"
 
 #define REG_INPUT_START                 ( 1000 )
 #define REG_INPUT_NREGS                 ( 64 )
@@ -65,12 +67,17 @@ static uint16_t   usRegHoldingStart = REG_HOLDING_START;
 static uint16_t   usRegHoldingBuf[REG_HOLDING_NREGS];
 const uint8_t     ucSlaveID[] = { 0xAA, 0xBB, 0xCC };
 eMBErrorCode    eStatus;
+extern uint8_t hex[];
 
 xQueueHandle xUsartLogQueue;
 
   
 xMessage xUsartLogMessage;
 extern const uint8_t* msgArray[];
+uint8_t devices, i, j, count, device[2][8];
+float temps;
+uint16_t raw_temp;
+TM_OneWire_t OneWire;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -81,11 +88,15 @@ static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void const * argument);
+void word_print(uint16_t );
+void byte_print(uint8_t );
 
 /* USER CODE BEGIN PFP */
 void vUsartPrint(void *);
 void vTask1(void *);
 void vMBPollTask(void *);
+void vGetTempTask(void *);
+ void tm_delay(uint16_t us);
 
 /* USER CODE END PFP */
 
@@ -97,6 +108,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  uint8_t tmp,i;
 
 
   /* USER CODE END 1 */
@@ -113,6 +125,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
+  HAL_TIM_Base_Start(&htim2);
   MX_USART1_UART_Init();
   //MX_USART2_UART_Init();
   xUsartLogQueue = xQueueCreate(3, sizeof(xMessage));
@@ -140,7 +153,38 @@ int main(void)
           while(1);
       }
   }
-  HAL_UART_Transmit(&huart1, (uint8_t*) "_Start\n\r", 7, 0xFFFF);
+  HAL_UART_Transmit(&huart1, (uint8_t*) "_Start\n\r", 8, 0xFFFF);
+  TM_OneWire_Init(&OneWire, GPIOB, GPIO_PIN_11);
+  HAL_UART_Transmit(&huart1, (uint8_t*) "cp0\n\r", 5, 0xFFFF);
+  TM_OneWire_ReadBit(&OneWire);
+  HAL_UART_Transmit(&huart1, (uint8_t*) "cp1\n\r", 5, 0xFFFF);
+  devices = 0;
+  devices = TM_OneWire_First(&OneWire);
+  devices = devices + 0x30;
+  HAL_UART_Transmit(&huart1, &devices, 1, 0xFFFF);
+  HAL_UART_Transmit(&huart1, (uint8_t*) "cp2\n\r", 5, 0xFFFF);
+  count = 0;
+  while (devices) {
+  /* Increase count variable */
+  count++;
+
+  /* Get full 8-bytes rom address */
+  TM_OneWire_GetFullROM(&OneWire, device[count - 1]);
+  HAL_UART_Transmit(&huart1, (uint8_t*) "cp3\n\r", 5, 0xFFFF);
+
+  /* Check for new device */
+  devices = TM_OneWire_Next(&OneWire);
+  }
+
+  for(i=0;i<8;i++)
+  {
+    tmp = device[0][i];
+    byte_print(tmp);
+  }
+
+  /* If any devices on 1-wire */
+  //  UsartLog(i%3, count);
+
   //HAL_UART_Transmit(&huart2, (uint8_t*) "0123\n\r", 4, 0xFFFF);
 
   /* USER CODE END 2 */
@@ -173,6 +217,10 @@ int main(void)
   //    NULL,1,NULL);
 
   xTaskCreate(vMBPollTask, "vMBPollTask",
+      configMINIMAL_STACK_SIZE,
+      NULL,1,NULL);
+
+  xTaskCreate(vGetTempTask, "vGetTempTask",
       configMINIMAL_STACK_SIZE,
       NULL,1,NULL);
 
@@ -260,7 +308,7 @@ void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 71;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 0;
+  htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   HAL_TIM_Base_Init(&htim2);
 
@@ -323,12 +371,18 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB11 PB6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_6;
+  /*Configure GPIO pins : PB6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PB11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  
   /*Configure GPIO pin : PB7 */
   GPIO_InitStruct.Pin = GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -377,6 +431,26 @@ void vMBPollTask(void *pvParameters)
   
   for(;;)  eMBPoll(); 
 }
+
+void vGetTempTask(void *pvParameters)
+{
+    /* Temperature Measurements */
+
+  for(;;)
+  {
+    TM_DS18B20_Start(&OneWire, device[0]);
+    while (!TM_DS18B20_AllDone(&OneWire));
+    
+    TM_DS18B20_Read(&OneWire, device[0], &temps, &raw_temp);
+    word_print(raw_temp);
+    usRegHoldingBuf[0] = raw_temp;
+    usRegHoldingBuf[1] = raw_temp;
+    vTaskDelay(1000);
+  }
+}
+
+
+
 
 eMBErrorCode
 eMBRegInputCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs )
@@ -477,7 +551,34 @@ void StartDefaultTask(void const * argument)
 
 }
  
+void tm_delay(uint16_t us)
+{
+  uint16_t start;
+  start  = (TIM2->CNT);
+  do { } while((uint16_t)(TIM2->CNT - start) < us);
+}
  
+void byte_print(uint8_t data)
+{
+  uint8_t hex_str[4];
+  hex_str[0] = hex[(data>>4)];
+  hex_str[1] = hex[data%16];
+  hex_str[2] = '\n';
+  hex_str[3] = '\r';
+  HAL_UART_Transmit(&huart1, hex_str, 4, 0xFFFF);
+}
+
+void word_print(uint16_t data)
+{
+  uint8_t hex_str[6];
+  hex_str[0] = hex[(data>>12)];
+  hex_str[1] = hex[(data>>8)&0x000f];
+  hex_str[2] = hex[(data>>4)&0x000f];
+  hex_str[3] = hex[(data>>0)&0x000f];
+  hex_str[4] = '\n';
+  hex_str[5] = '\r';
+  HAL_UART_Transmit(&huart1, hex_str, 6, 0xFFFF);
+}
 
 #ifdef USE_FULL_ASSERT
 
